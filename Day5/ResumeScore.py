@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from groq import Groq
+import time
 load_dotenv()
 
 # Retrieve API key
@@ -17,77 +18,40 @@ client = Groq(api_key=my_api_key)
 # Define model and message
 model_name = "llama-3.3-70b-versatile"
 jobDescription="""
-Project Role : Custom Software Engineer
-Project Role Description : Develop custom software solutions to design, code, and enhance components across systems or applications. Use modern frameworks and agile practices to deliver scalable, high-performing solutions tailored to specific business needs.
-Must have skills : API Management
-Good to have skills : Java (Programming Language)
-Minimum 0-2 year(s) of experience is required
-Educational Qualification : 15 years full time education
+Job Description
+Wissen Technology is hiring for Python Developer
 
-Summary:
-This position is responsible for providing support to customers using new and emerging technologies. This is a customer-facing role during pre and post implementation launches and must have a solid understanding of all Vertex offerings to act as an escalation point for complex issues. An adept understanding and intermediate expertise in the areas of network issues, API, MSSQL, Oracle, Java, Linux, Postgres and Hana/DB2 is needed.
+About Wissen Technology: 
 
-Roles & Responsibilities:
--Perform as a final escalation point for highly complex, visible, and sensitive client issues.
--Drive positive results in Customer Experience through timely response, and positive interaction.
--Communicate customers needs and requirements to other Vertex employees and teams.
--Provide technology expertise, work leadership, and assistance to less senior staff.
--Demonstrate self-direction in meeting targets for performance metrics to achieve daily work goals.
--Act as a Customer Support liaison during implementation of customer programs to understand product, usage and technology for post-implementation support.
--Provide ongoing support and troubleshooting for installed technical solutions by analyzing a chain of events and applying technical knowledge, following established procedures and standards.
--Ability to work within the direction and expectations of the Customer Support Work Center.
--Work closely with Vertex emerging products and emerging technologies to understand and implement support processes.
--Work highly technical and sensitive issues through to a mutually acceptable resolution by accurately assessing the issue/situation and using critical and creative thinking.
--Build and leverage strong relationships with both internal and external customers.
--Receive highly complex escalations from Tier 2 analysts.
--Provide support as dictated by business drivers.
--Create, edit and maintain knowledge entries including best practices entries.
--Help drive positive results in Customer Experience through timely response, and positive interaction.
--Maintain all support shared systems (virtual environments, databases, and shared instances).
--Participate in other projects or duties.
+At Wissen Technology, we deliver niche, custom-built products that solve complex business challenges across industries worldwide. Founded in 2015, our core philosophy is built around a strong product engineering mindset—ensuring every solution is architected and delivered right the first time. Today, Wissen Technology has a global footprint with 2000+ employees across offices in the US, UK, UAE, India, and Australia. Our commitment to excellence translates into delivering 2X impact compared to traditional service providers. How do we achieve this? Through a combination of deep domain knowledge, cutting-edge technology expertise, and a relentless focus on quality. We don’t just meet expectations—we exceed them by ensuring faster time-to-market, reduced rework, and greater alignment with client objectives. We have a proven track record of building mission-critical systems across industries, including financial services, healthcare, retail, manufacturing, and more. Wissen stands apart through its unique delivery models. Our outcome-based projects ensure predictable costs and timelines, while our agile pods provide clients with the flexibility to adapt to their evolving business needs. Wissen leverages its thought leadership and technology prowess to drive superior business outcomes. Our success is powered by top-tier talent.  Our mission is clear: to be the partner of choice for building world-class custom products that deliver exceptional impact—the first time, every time.
 
-Professional & Technical Skills:
+Job Summary: 
 
-Professional experience in troubleshooting, maintaining, or developing data-driven applications connected to relational databases, XML sources, and high volume web services.
-Subject Matter Expert in one or more of the following areas: Database technology (Oracle, SQL Server, Postgres, DB2, Hana), Java, XML, web services, ERP's, network architecture, database or application performance issues.
-Experience with troubleshooting, maintaining, or developing data-driven applications connected to relational databases, XML sources, and high-volume web services.
-Expert knowledge in supported transmission types (XML, REST, JSON) and record types within each transmission (examples - Address Validation, Quotation Requests, Invoice Request, Accruals, and Purchases,) and processing tools such as SoapUI and Postman.
-Experience with Data Security & Operations.
-Experience with LINUX and Web Programming, including HTTP programming, ICF, Framework, Web Services in ABAP (SOAP, WSDLs) JAVA programming.
-Experience with SAP NetWeaver Architecture and Integration technology and SAP Mobility Technology is preferred
-Understand VM's, NAS, Unix, Shell programming and mainframe systems.
-Understand FTP scripting, ECG, TWS, etc.
-Understand Java and functional programming concepts.
-Deep understanding of and debugging experience with networking protocols.
-Excellent debugging skills in a wide variety of technologies and programming languages.
-Ability to network with key contacts outside own area of expertise.
-Ability to listen and understand information and communicate the same.
-Must possess strong interpersonal, organizational, presentation and facilitation skills.
-Must be results oriented and customer focused.
-Understanding of Vertex customers use of the Vertex products is highly desired.
-Strong desire to research and study new emerging technologies for consideration in future and ongoing development efforts.
-Understand internal proprietary information and distribute information appropriately.
-Experience in handling customer escalations, and calmly working in stressful situations.
-Excellent analytical and creative problem-solving skills.
-Ability to apply professional concepts, experience and company objectives in order to perform an in-depth analysis of situations or data to resolve complex issues in creative ways.
-Exercise a professional approach with others using all appropriate tools of communication ability to adjust communication style and delivery to the audience.
-Must possess good organizational skills.
-Must be results oriented, customer focused, and exhibit good interpersonal skills.
-Proficiency in Microsoft office packages.
-Sufficient knowledge of business communications, including telephone, voicemail, and e-mail and operations of office machines, such as photocopier, scanner, and fax.
-This role covers the Vertex on-call duties on a rotational basis.
+We are seeking a skilled Python Developer to design, develop, and maintain scalable applications and backend services. The ideal candidate will have strong expertise in Python, problem-solving, API development, and database technologies, with the ability to deliver high-quality, efficient, and reliable software solutions.
 
+Experience: 2-6 Years 
+Location: Mumbai
+Mode of Work: Full Time
+Education: B.Tech/M.Tech in Computer Science or related field
+Key Responsibilities:
 
-Additional Information:
+Experience in Python (Only Backend), Data structures, Oops, Algorithms, Django, NumPy etc. 
+Notice/Joining of not more than 30 days. 
+Hybrid Mode of working. 
+Good understanding of writing Unit Tests using PYTest. 
+Good understanding of parsing XML’s and handling files using Python. 
+Good understanding with Databases/SQL, procedures and query tuning. 
+Service Design Concepts, OO and Functional Development concepts. 
+Agile Development Methodologies. 
+Strong oral and written communication skills. 
+Excellent interpersonal skills and professional approach Skills desired
+Wissen Sites: 
 
-Bachelor's/Master s degree in Management Information Systems or Computer Information Technology or related field required.
-Six (6) plus years of relevant industry experience.
-Professional experience in troubleshooting, maintaining, or developing data-driven applications connected to relational databases, XML sources, web services, big data driven backend systems.
-Experience with building and maintaining Big Data and Fast Data applications.
-Experience with Data Governance, Security & Operations.
-Experience with Web Programming, including HTTP programming, ICF Framework, Web Services in ABAP (SOAP, WSDLs) JAVA programming SAP NetWeaver Architecture and Integration technology and SAP Mobility Technology
-Experience in handling customer escalations, and calmly working in stressful situations.
-Or equivalent combination of education and/or experience.
+Website: www.wissen.com
+LinkedIn: https://www.linkedin.com/company/wissen-technology
+Wissen Leadership: Leadership Team | Wissen
+Wissen Live: Log Masuk LinkedIn, Daftar Masuk | LinkedIn
+Wissen Thought Leadership: https://www.wissen.com/articles/
 """
 
 class JobDesc(BaseModel):
@@ -134,6 +98,7 @@ messages=[messageSystem,messageUser]
 response = client.chat.completions.create(
     model=model_name,
     messages=messages,
+    response_format=responseformat,
 
 )
 answer=response.choices[0].message.content
@@ -142,9 +107,9 @@ rawJson=answer
 
 import json
 
-jsonData=json.load(rawJson)
+jsonData=json.loads(rawJson)
 
-job=jobDescription(**jsonData)
+job=JobDesc(**jsonData)
 
 
 class MatchResult(BaseModel):
@@ -172,18 +137,103 @@ resumeSchema=Resume.model_json_schema()
 def finalScore(job,resume):
     matchschema=MatchResult.model_json_schema()
     prompt=f"""
-you are an expert Hr recruiter
-Compare this candidate  resume with the jd
+    You are an HR recruiter.
 
-"""
+    Compare the candidate's resume with the job description.
 
+    JOB DESCRIPTION:
+    {job.model_dump_json(indent=2)}
 
+    CANDIDATE RESUME:
+    {resume.model_dump_json(indent=2)}
+    Return JSON matching this schema:
+
+    {matchschema}
+
+    Give me:
+
+    1. Candidate name
+    2. Matching skills
+    3. Missing important skills
+    4. Whether experience requirement is met
+    5. Overall match percentage from 0 to 100
+    6. A short final verdict
+
+    Keep the response concise and easy to read.
+    """
+    message={
+        "role": "user",
+        "content" : prompt
+    }
+    messages=[message]
+    response_format={
+        "type": "json_object"
+    }
+    response = client.chat.completions.create(model=model_name, messages=messages, response_format=response_format)
+    data = json.loads(response.choices[0].message.content)
+    return MatchResult(**data)
+
+def paresedresume(resumetext):
+    system_prompt=f"""
+You are an expert resume parser.
+
+    Extract information from the resume based on its meaning,
+    not only based on exact section headings.
+
+    Different resumes may use different headings.
+
+    For example:
+    - Experience
+    - Professional Experience
+    - Work History
+    - Employment
+    - Internships
+
+    These may all contain relevant experience.
+
+    Skills may also appear in the skills section, work experience,
+    internships or projects.
+
+    Return ONLY valid JSON matching this schema:
+
+    {resumeSchema}
+
+    Important rules:
+
+    1. Do not invent information.
+    2. If a value is not available, return null.
+    3. If a list has no information, return an empty list.
+    4. Include internships inside experiences.
+    5. Extract skills mentioned across the entire resume.
+    """
+    user_prompt = f"""
+    Parse the following resume:
+
+    {resumetext}
+    """
+    message_system={
+        "role" : "system",
+        "content" : system_prompt
+    }
+    message_user={
+        "role" : "user",
+        "content" : user_prompt
+    }
+    messages=[message_system, message_user]
+    response_format={
+        "type": "json_object"
+    }
+    response=client.chat.completions.create(model=model_name, messages=messages, response_format=response_format)
+    raw_output = response.choices[0].message.content
+    data = json.loads(raw_output)
+    resume = Resume(**data)
+    return resume
 
 
 
 
 ##resume read method
-from pydf import PdfReader
+from PyPDF2 import PdfReader
 from docx import Document
 
 def Readpdf(filePath):
@@ -198,7 +248,7 @@ def Readpdf(filePath):
 def Readdoc(filePath):
     reader=Document(filePath)
     text=""
-    for para in reader.paragraph:
+    for para in reader.paragraphs:
         if para.text.strip():
             text+=para.text+"\n"
     for table in reader.tables:
@@ -222,5 +272,49 @@ allResult=[]
 for filepath in  resumeFolder.iterdir():
     if (filepath.suffix.lower() not in [".pdf",".docx"]):
         continue
+    print("processing\n",filepath.name)
+    resumeText=readResume(filepath)
+    parsedresume=paresedresume(resumeText)
+    time.sleep(5)
+    result=finalScore(job,parsedresume)
+    time.sleep(5)
+    print("score",result.score)
+    allResult.append({
+        "name":parsedresume.name,
+        "score":result.score,
+        "details":result.details
+
+    })
+allResult.sort(
+    key=lambda candidate:candidate["score"],
+    reverse=True
+
+)
+top_2 = allResult[:2]
+worst_2 = allResult[-2:]
+
+
+print("TOP 2 CANDIDATES")
+for candidate in top_2:
+
+    print(
+        candidate["name"],
+        "-",
+        candidate["score"],
+        "%"
+    )
+
+    print(candidate["details"])
+
+print("LOWEST 2 CANDIDATES")
+for candidate in worst_2:
+
+    print(
+        candidate["name"],
+        "-",
+        candidate["score"],
+        "%"
+    )
+    print(candidate["details"])
 
 
