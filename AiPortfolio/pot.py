@@ -23,12 +23,12 @@ model_name = "llama-3.1-8b-instant"
 # """
 
 Hrprompt=f"""
-tell me  about his project what he has done
+give the resume
 """
 
 
 summary=f"""
-Hi! Before Start This is mine Summary 
+apart from the backend role i am also working on linux system,iot  
 """
 
 projectdetail="""
@@ -160,8 +160,8 @@ Return the output as valid json only.
        single list of strings (skills is a list, not an object of categories).
     6. "project" is a list of strings - one string per project, combining the
        project name and its description.
-    7. totalExperienceinYears must be a number, estimated from the date ranges
-       in the experience section.
+    7. totalExperienceinYears: always return null. Do not calculate or guess
+       this - it is computed separately from the duration strings, not by you.
     """
     user_prompt = f"""
     Parse the following resume and return json only:
@@ -191,7 +191,37 @@ Return the output as valid json only.
         print(f"[warn] model returned keys not in Resume schema, dropped: {sorted(unknown)}")
 
     resume = Resume(**data)
+    resume.totalExperienceinYears = computeTotalExperienceYears(resume.experience)
     return resume
+
+def computeTotalExperienceYears(experience):
+    # Do the date math in Python instead of asking the LLM - models guess a
+    # "plausible sounding" number here instead of actually subtracting dates.
+    from datetime import datetime
+    import re
+
+    total_months = 0
+    for job in experience:
+        if not job.duration:
+            continue
+        match = re.match(
+            r"\s*([A-Za-z]+ \d{4})\s*-\s*(Present|Current|[A-Za-z]+ \d{4})\s*",
+            job.duration,
+        )
+        if not match:
+            continue
+        start_str, end_str = match.groups()
+        try:
+            start = datetime.strptime(start_str, "%b %Y")
+            end = datetime.today() if end_str in ("Present", "Current") else datetime.strptime(end_str, "%b %Y")
+        except ValueError:
+            continue
+        months = (end.year - start.year) * 12 + (end.month - start.month)
+        if months > 0:
+            total_months += months
+
+    return round(total_months / 12, 1) if total_months else None
+
 ##resume read method
 from PyPDF2 import PdfReader
 from docx import Document
@@ -249,93 +279,149 @@ import sys
 parsed_resume = loadParsedResume(resume_path, refresh="--refresh" in sys.argv)
 resume_json = json.dumps(parsed_resume.model_dump(), indent=2)
 
+# systemPrompt=f"""
+# You are an expert HR assistant answering questions about one candidate.
+
+# CRITICAL - HOW YOU SPEAK:
+# The HR person cannot see your source material. They see only your answer.
+# So NEVER refer to your sources. Never write "According to SECTION 3",
+# "based on the resume data", "the write-up says", "in section 1", or anything
+# similar. State every fact directly as a fact about the candidate. Write as if
+# you simply know these things about him.
+
+# Your profile context is made of FOUR labelled sections below. All four are
+# equally valid sources - the resume is not the only one. Read every section
+# before answering, and pick the section that actually matches the question.
+
+# ===== SECTION 1: RESUME DATA (structured) =====
+# {resume_json}
+# ===== END SECTION 1 =====
+
+# ===== SECTION 2: CANDIDATE'S OWN SUMMARY =====
+# {summary}
+# ===== END SECTION 2 =====
+
+# ===== SECTION 3: DETAILED PROJECT WRITE-UPS =====
+# {projectdetail}
+# ===== END SECTION 3 =====
+
+# ===== SECTION 4: HOBBIES AND INTERESTS =====
+# {Hobbie}
+# ===== END SECTION 4 =====
+
+# How to answer:
+# - Hobbies / interests / "what does he do outside work" -> SECTION 4.
+# - Work experience, a company name (e.g. Roomhy) -> SECTION 1 "experience".
+#   Describe completely what he did there, in the resume's own words.
+# - Contact details, skills, certifications, education -> SECTION 1.
+# - "Tell me about him" -> a short intro from SECTION 1 + SECTION 2.
+# - ANY question about projects -> follow the PROJECT ANSWER PROCEDURE below.
+#   This applies to every project question, casual or deep - "tell me about his
+#   projects", "what has he built", "what he has done" all count.
+
+# PROJECT ANSWER PROCEDURE (follow these steps in order, every time):
+
+# STEP 1. Build the project list from SECTION 1 "project" ONLY. That list decides
+#         how many projects you write about and in what order. SECTION 3 does NOT
+#         get a vote here - it has write-ups for only some of them.
+
+# STEP 2. For each project in that list, find its matching write-up in SECTION 3.
+#         Match by project name and be generous, the wording differs slightly
+#         between sections (e.g. "SafeTrack - IoT Real-Time GPS Tracking Platform"
+#         and "SafeTrack - IoT GPS Tracking Platform" are the SAME project).
+#         Some projects will have no write-up. That is expected and fine.
+
+# STEP 3. Write every project from STEP 1 using this exact structure:
+
+#           **<project name>** (<dates, if SECTION 1 has them>)
+#           <the resume bullets for that project, from SECTION 1>
+
+#           Problem: <that project's Problem Statement>
+#           Approach: <that project's Solution, with the technical specifics>
+#           What stands out: <that project's Uniqueness>
+
+#         The bold line and resume bullets come from SECTION 1 and are REQUIRED -
+#         write them even when a rich write-up exists. The Problem / Approach /
+#         What stands out lines come from SECTION 3 - include them whenever that
+#         project has a write-up, and simply omit those three lines for a project
+#         that has none. Never invent them.
+
+# STEP 4. Check your answer contains every project from STEP 1. If SECTION 1 lists
+#         four projects, your answer has four projects. A project with no write-up
+#         still gets its bold heading and its resume bullets - do not silently
+#         drop it just because SECTION 3 does not mention it.
+
+# Keep the real detail: name the actual technologies, numbers, and design
+# decisions. Do not compress a write-up into a single sentence. Do not end with a
+# summarising paragraph about his range, versatility, or abilities - stop after
+# the last project.
+
+# Important:
+# Read the HR question first, then answer only from the sections above.
+# Never name or reference the sections in your answer (see CRITICAL at the top).
+# Do not invent anything. Do not add your own creative wording.
+# A section being short does not mean it is empty - if SECTION 4 has two lines,
+# those two lines ARE the hobbies, report them.
+# Only say "I do not have that information" if it is genuinely absent from all
+# four sections.
+# Answer only what was asked, then stop until the next question.
+# """
+
 systemPrompt=f"""
-You are an expert HR assistant answering questions about one candidate.
+You are an expert hr assistant
+You are been provided 4 data, each one starts with its own tag data1/data2/data3/data4 so donot get
+confused with the 1. 2. 3. numbering used inside data3 for listing projects, that numbering is only
+inside data3 and has nothing to do with data1/data2/data3/data4
 
-CRITICAL - HOW YOU SPEAK:
-The HR person cannot see your source material. They see only your answer.
-So NEVER refer to your sources. Never write "According to SECTION 3",
-"based on the resume data", "the write-up says", "in section 1", or anything
-similar. State every fact directly as a fact about the candidate. Write as if
-you simply know these things about him.
+data1: {resume_json}
 
-Your profile context is made of FOUR labelled sections below. All four are
-equally valid sources - the resume is not the only one. Read every section
-before answering, and pick the section that actually matches the question.
+data2: {summary}
 
-===== SECTION 1: RESUME DATA (structured) =====
-{resume_json}
-===== END SECTION 1 =====
+data3: {projectdetail}
 
-===== SECTION 2: CANDIDATE'S OWN SUMMARY =====
-{summary}
-===== END SECTION 2 =====
+data4: {Hobbie}
 
-===== SECTION 3: DETAILED PROJECT WRITE-UPS =====
-{projectdetail}
-===== END SECTION 3 =====
+based on the ask details of the hr you have to answer
+Task: Your Task is to read this details and make sure that you donot genrate any other answer by your own rather than provided in order to answer the question
 
-===== SECTION 4: HOBBIES AND INTERESTS =====
-{Hobbie}
-===== END SECTION 4 =====
-
-How to answer:
-- Hobbies / interests / "what does he do outside work" -> SECTION 4.
-- Work experience, a company name (e.g. Roomhy) -> SECTION 1 "experience".
-  Describe completely what he did there, in the resume's own words.
-- Contact details, skills, certifications, education -> SECTION 1.
-- "Tell me about him" -> a short intro from SECTION 1 + SECTION 2.
-- ANY question about projects -> follow the PROJECT ANSWER PROCEDURE below.
-  This applies to every project question, casual or deep - "tell me about his
-  projects", "what has he built", "what he has done" all count.
-
-PROJECT ANSWER PROCEDURE (follow these steps in order, every time):
-
-STEP 1. Build the project list from SECTION 1 "project" ONLY. That list decides
-        how many projects you write about and in what order. SECTION 3 does NOT
-        get a vote here - it has write-ups for only some of them.
-
-STEP 2. For each project in that list, find its matching write-up in SECTION 3.
-        Match by project name and be generous, the wording differs slightly
-        between sections (e.g. "SafeTrack - IoT Real-Time GPS Tracking Platform"
-        and "SafeTrack - IoT GPS Tracking Platform" are the SAME project).
-        Some projects will have no write-up. That is expected and fine.
-
-STEP 3. Write every project from STEP 1 using this exact structure:
-
-          **<project name>** (<dates, if SECTION 1 has them>)
-          <the resume bullets for that project, from SECTION 1>
-
-          Problem: <that project's Problem Statement>
-          Approach: <that project's Solution, with the technical specifics>
-          What stands out: <that project's Uniqueness>
-
-        The bold line and resume bullets come from SECTION 1 and are REQUIRED -
-        write them even when a rich write-up exists. The Problem / Approach /
-        What stands out lines come from SECTION 3 - include them whenever that
-        project has a write-up, and simply omit those three lines for a project
-        that has none. Never invent them.
-
-STEP 4. Check your answer contains every project from STEP 1. If SECTION 1 lists
-        four projects, your answer has four projects. A project with no write-up
-        still gets its bold heading and its resume bullets - do not silently
-        drop it just because SECTION 3 does not mention it.
-
-Keep the real detail: name the actual technologies, numbers, and design
-decisions. Do not compress a write-up into a single sentence. Do not end with a
-summarising paragraph about his range, versatility, or abilities - stop after
-the last project.
-
-Important:
-Read the HR question first, then answer only from the sections above.
-Never name or reference the sections in your answer (see CRITICAL at the top).
+Important Rule:
+This set of instruction should be strictly followed everytime
 Do not invent anything. Do not add your own creative wording.
-A section being short does not mean it is empty - if SECTION 4 has two lines,
-those two lines ARE the hobbies, report them.
-Only say "I do not have that information" if it is genuinely absent from all
-four sections.
+If an hr ask what his hobbiee||tell about himself rather than his experience You have to just go for the data4 and tell him
+if anywhere you have to provide the experience you should read data1 and then tell the experience if  in month then tell how many or year for the same
+If asked for the work experince then you should provide from data1 -> company Name ,joining date ,current working or not, then according to data1 frame work what his done no any fake telling of work
+If the hr ask For an summary|| tell about him||who is he then You should read first data1 and data2 based on that in short provide an introduction about himself
+You Should be Writing the name of the person present is resume Donot write like this " the individual worked as a Full Stack Developer"
+donot tell anything wrong or own word that is not present in data1,data2,data3,data4 strictly instructed you have to answer based on this only
+If asked for showcasing project||detail of project||his project then ask hr first tell me casual||deep  donot give direct description if casual then read from data1 and explain  and tell if deep read form data3 and if any specific project more deep he want
+then read both casual and deep in which more clear info present showcase to him
+data4 is hobbies only, never list anything from data4 as a project even if it sounds like one
+if the hr asked for the complete resume|| give the resume then write it out like an actual resume, section by section, in this order:
+    Name, email, phone from data1
+    Summary: combine data1 summary and data2 into one short paragraph
+    Skills: full skills list from data1, do not shorten it
+    Experience: from data1, every job with company, role, duration, and the complete whatdone detail, do not summarize or cut this part short
+    Projects: one project per line from data1's project list, and for each one add 3-4 lines pulled from data3 explaining what it does, if a project has no matching data3 write-up just keep the 1 line from data1 for it
+    Hobbies: from data4, keep it short, this section stays last
+this is the only case where you give everything at once in one long answer, donot ask casual||deep here, donot skip any section even if it makes the answer long
 Answer only what was asked, then stop until the next question.
 """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 messageSystem={
     "role":"system",
@@ -346,12 +432,21 @@ messageHr={
     "content":Hrprompt
 }
 messages=[messageSystem,messageHr]
-response = client.chat.completions.create(
-    model=model_name,
-    messages=messages,
-    max_tokens=2000,
-)
-if response.choices[0].finish_reason == "length":
-    print("[warn] answer hit the token limit and was cut off")
-answer=response.choices[0].message.content
-print(answer)
+
+# Loop so the assistant can actually ask "casual or deep?" and get a real
+# reply, instead of the old single-shot call that could never wait for HR.
+while True:
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=messages,
+    )
+    if response.choices[0].finish_reason == "length":
+        print("[warn] answer hit the token limit and was cut off")
+    answer = response.choices[0].message.content
+    print(f"\n{answer}\n")
+    messages.append({"role": "assistant", "content": answer})
+
+    followup = input("HR (or 'exit'): ").strip()
+    if not followup or followup.lower() in ("exit", "quit"):
+        break
+    messages.append({"role": "user", "content": followup})
