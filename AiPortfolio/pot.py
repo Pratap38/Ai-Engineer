@@ -18,6 +18,8 @@ client = Groq(api_key=my_api_key)
 
 # Define model and message
 model_name = "llama-3.1-8b-instant"
+
+parse_model_name = "llama-3.3-70b-versatile"
 # Hrprompt=f"""
 # hey okiee so i want to know about this guy tell me
 # """
@@ -162,6 +164,11 @@ Return the output as valid json only.
        project name and its description.
     7. totalExperienceinYears: always return null. Do not calculate or guess
        this - it is computed separately from the duration strings, not by you.
+    8. "whatdone" must include EVERY bullet point listed under that job, not
+       just one of them. If a job has 6 bullet points in the resume, whatdone
+       must contain all 6, joined together (e.g. one per sentence or separated
+       by semicolons). Never pick just the first or "most important" bullet -
+       that drops real information the candidate wrote.
     """
     user_prompt = f"""
     Parse the following resume and return json only:
@@ -180,7 +187,7 @@ Return the output as valid json only.
     response_format={
         "type": "json_object"
     }
-    response=client.chat.completions.create(model=model_name, messages=messages, response_format=response_format)
+    response=client.chat.completions.create(model=parse_model_name, messages=messages, response_format=response_format, temperature=0)
     raw_output = response.choices[0].message.content
     data = json.loads(raw_output)
 
@@ -277,7 +284,18 @@ def loadParsedResume(filePath, refresh=False):
 # run with --refresh to force a re-parse
 import sys
 parsed_resume = loadParsedResume(resume_path, refresh="--refresh" in sys.argv)
-resume_json = json.dumps(parsed_resume.model_dump(), indent=2)
+
+# everything about the candidate in one place now, not scattered variables,
+# this is what the backend will load later instead of re-parsing the resume
+# and re-typing summary/projectdetail/hobbie every time
+profile = {
+    "resume": parsed_resume.model_dump(),
+    "summary": summary,
+    "projectDetails": projectdetail,
+    "hobbies": Hobbie,
+}
+profile_path = Path(__file__).with_name("profile.json")
+profile_path.write_text(json.dumps(profile, indent=2))
 
 # systemPrompt=f"""
 # You are an expert HR assistant answering questions about one candidate.
@@ -373,13 +391,13 @@ You are been provided 4 data, each one starts with its own tag data1/data2/data3
 confused with the 1. 2. 3. numbering used inside data3 for listing projects, that numbering is only
 inside data3 and has nothing to do with data1/data2/data3/data4
 
-data1: {resume_json}
+data1: {json.dumps(profile["resume"], indent=2)}
 
-data2: {summary}
+data2: {profile["summary"]}
 
-data3: {projectdetail}
+data3: {profile["projectDetails"]}
 
-data4: {Hobbie}
+data4: {profile["hobbies"]}
 
 based on the ask details of the hr you have to answer
 Task: Your Task is to read this details and make sure that you donot genrate any other answer by your own rather than provided in order to answer the question
@@ -401,7 +419,7 @@ if the hr asked for the complete resume|| give the resume then write it out like
     Summary: combine data1 summary and data2 into one short paragraph
     Skills: full skills list from data1, do not shorten it
     Experience: from data1, every job with company, role, duration, and the complete whatdone detail, do not summarize or cut this part short
-    Projects: one project per line from data1's project list, and for each one add 3-4 lines pulled from data3 explaining what it does, if a project has no matching data3 write-up just keep the 1 line from data1 for it
+    Projects: the project list is ALWAYS data1's project list, exact count exact names, donot drop any of them and donot add any project that is only in data3 and not in data1, data3 is only used to add 3-4 extra lines to a project that is already in data1's list, if a project in data1 has no matching write-up in data3 just keep the 1 line from data1 for it and move on
     Hobbies: from data4, keep it short, this section stays last
 this is the only case where you give everything at once in one long answer, donot ask casual||deep here, donot skip any section even if it makes the answer long
 Answer only what was asked, then stop until the next question.
@@ -439,6 +457,7 @@ while True:
     response = client.chat.completions.create(
         model=model_name,
         messages=messages,
+        temperature=0,
     )
     if response.choices[0].finish_reason == "length":
         print("[warn] answer hit the token limit and was cut off")
