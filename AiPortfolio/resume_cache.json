@@ -1,0 +1,64 @@
+{
+  "name": "PRATAP NARAYAN CHOUBEY",
+  "email": "pratapchoubey3@gmail.com",
+  "phone": "+91 8797726488",
+  "summary": "Backend-focused Software Engineer with production experience designing scalable APIs, authentication systems, and real-time data pipelines for a multi-tenant SaaS platform.",
+  "totalExperienceinYears": 8.0,
+  "skills": [
+    "Python",
+    "JavaScript",
+    "SQL",
+    "Django",
+    "Django REST Framework",
+    "Django Channels",
+    "Node.js",
+    "Express.js",
+    "RESTful API Design",
+    "WebSocket",
+    "MongoDB",
+    "PostgreSQL",
+    "MySQL",
+    "Redis",
+    "JWT",
+    "OAuth 2.0",
+    "Role-Based Access Control (RBAC)",
+    "Docker",
+    "Git",
+    "GitHub",
+    "nginx",
+    "PM2",
+    "Linux",
+    "Postman",
+    "Render"
+  ],
+  "experience": [
+    {
+      "company": "Roomhy Technology",
+      "role": "Full Stack Developer",
+      "duration": "Mar 2026 - Present",
+      "skillUsed": [
+        "Redis",
+        "MongoDB",
+        "Python",
+        "JavaScript",
+        "Git",
+        "GitHub",
+        "nginx",
+        "PM2",
+        "Linux",
+        "Postman",
+        "Docker"
+      ],
+      "whatdone": "One of two engineers owning end-to-end backend development for a multi-tenant property/hostel management SaaS platform spanning Owner, Tenant, and Admin panels; Re-architected the backend data layer (Redis caching, MongoDB query optimization, duplicate API call elimination), cutting application load times from 20-30s to 3-4s (~85% reduction) and improving usability for property owners and tenants; Engineered an Aadhaar-based KYC verification pipeline with 15-second real-time polling, JWT-secured links, and approval-gating logic that blocks unverified listings from going live; Designed and shipped a two-signer e-signature workflow (Zoho Writer + Zoho Sign APIs) with sequential OAuth 2.0 callbacks and token rotation across dev/prod, reducing agreement turnaround from hours to under 5 minutes; Led authentication and access-control hardening (JWT, OAuth 2.0, role-based route guards) across all panels during a security audit, closing critical tenant-PII exposure and login-bypass vulnerabilities; Owned third-party integrations end-to-end, including Zoho CRM/Writer/Sign and Razorpay payment APIs with bank-account penny-drop verification."
+    }
+  ],
+  "project": [
+    "Train Network & Route Optimization Engine - Graph Algorithms",
+    "Rogue Chat - Production Real-Time Messaging Platform",
+    "SafeTrack - IoT Real-Time GPS Tracking Platform"
+  ],
+  "certification": [
+    "Prompt Engineering (Infosys Springboard)",
+    "Python (TuteDude)"
+  ]
+}
