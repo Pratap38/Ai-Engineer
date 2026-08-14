@@ -1,0 +1,114 @@
+{% extends 'portfolio/base.html' %}
+{% block title %}Pratap{% endblock %}
+
+{% block content %}
+<div class="flex h-full">
+  {% include 'portfolio/_sidebar.html' %}
+
+  <main class="flex-1 flex flex-col min-w-0 bg-bg-100 dark:bg-d-bg-200">
+
+    <!-- mobile top bar -->
+    <header class="md:hidden flex items-center justify-between px-4 h-14
+                   border-b border-brd-200 dark:border-d-brd-200">
+      <span class="font-serif text-lg">Pratap</span>
+      <a href="{% url 'new_conversation' %}" class="text-accent text-sm font-medium">New chat</a>
+    </header>
+
+    <div class="flex-1 overflow-y-auto c-scroll">
+      <div class="mx-auto w-full max-w-3xl px-6 min-h-full flex flex-col justify-center py-16">
+
+        <!-- greeting -->
+        <div class="flex items-center gap-3 mb-8">
+          <svg viewBox="0 0 24 24" class="w-8 h-8 text-accent shrink-0" fill="currentColor">
+            <path d="M12 2.6l1.86 5.02L19 6.02l-2.9 4.2L21 12l-4.9 1.78L19 17.98l-5.14-1.6L12 21.4l-1.86-5.02L5 17.98l2.9-4.2L3 12l4.9-1.78L5 6.02l5.14 1.6z"/>
+          </svg>
+          <h1 class="font-serif text-[2rem] leading-tight tracking-tight
+                     text-txt-100 dark:text-d-txt-100">
+            <span id="greet">Hello</span>— ask me about
+            {% if profile.resume %}{{ profile.resume.name|title }}{% else %}Pratap{% endif %}
+          </h1>
+        </div>
+
+        <!-- composer -->
+        <form id="homeForm" class="relative">
+          <div class="rounded-2xl border border-brd-300 dark:border-d-brd-300
+                      bg-bg-000 dark:bg-d-bg-300
+                      shadow-[0_2px_8px_rgba(0,0,0,0.04)]
+                      focus-within:border-accent/60 transition-colors">
+            <textarea id="homeInput" rows="1" autofocus
+              placeholder="How can I help you today?"
+              class="block w-full resize-none bg-transparent px-4 pt-3.5 pb-2
+                     text-[0.95rem] leading-6 placeholder-txt-400 dark:placeholder-d-txt-400
+                     text-txt-100 dark:text-d-txt-100 focus:outline-none"></textarea>
+            <div class="flex items-center justify-between px-3 pb-3 pt-1">
+              <span class="text-[0.7rem] text-txt-400 dark:text-d-txt-400">
+                Claude-style portfolio · Groq
+              </span>
+              <button type="submit" id="homeSend" disabled
+                class="grid place-items-center w-8 h-8 rounded-lg
+                       bg-accent text-white hover:bg-accent-hov
+                       disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <!-- suggestion chips -->
+        <div class="mt-4 flex flex-wrap gap-2">
+          {% for s in suggestions %}
+          <button type="button" data-q="{{ s }}"
+            class="chip px-3 py-1.5 rounded-full text-[0.8rem]
+                   border border-brd-300 dark:border-d-brd-300
+                   text-txt-300 dark:text-d-txt-300
+                   hover:bg-bg-300 dark:hover:bg-d-bg-300
+                   hover:text-txt-100 dark:hover:text-d-txt-100 transition-colors">
+            {{ s }}
+          </button>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function () {
+    var h = new Date().getHours();
+    document.getElementById('greet').textContent =
+      h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+
+    var form = document.getElementById('homeForm');
+    var ta   = document.getElementById('homeInput');
+    var send = document.getElementById('homeSend');
+    var NEW  = "{% url 'new_conversation' %}";
+
+    function sync() {
+      send.disabled = ta.value.trim() === '';
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 240) + 'px';
+    }
+    ta.addEventListener('input', sync);
+
+    ta.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = ta.value.trim();
+      if (!q) return;
+      window.location.href = NEW + '?q=' + encodeURIComponent(q);
+    });
+
+    document.querySelectorAll('.chip').forEach(function (b) {
+      b.addEventListener('click', function () {
+        window.location.href = NEW + '?q=' + encodeURIComponent(b.dataset.q);
+      });
+    });
+  })();
+</script>
+{% endblock %}

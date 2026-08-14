@@ -1,0 +1,256 @@
+{% extends 'portfolio/base.html' %}
+{% block title %}Pratap{% endblock %}
+
+{% block content %}
+<div class="flex h-full">
+  {% include 'portfolio/_sidebar.html' %}
+
+  <main class="flex-1 flex flex-col min-w-0 bg-bg-100 dark:bg-d-bg-200">
+
+    <!-- mobile top bar -->
+    <header class="md:hidden flex items-center justify-between px-4 h-14 shrink-0
+                   border-b border-brd-200 dark:border-d-brd-200">
+      <a href="/" class="font-serif text-lg">Pratap</a>
+      <a href="{% url 'new_conversation' %}" class="text-accent text-sm font-medium">New chat</a>
+    </header>
+
+    <!-- transcript -->
+    <div id="scroller" class="flex-1 overflow-y-auto c-scroll">
+      <div id="messages" class="mx-auto w-full max-w-3xl px-6 py-8 space-y-6">
+        {% for message in messages %}
+          {% if message.role == 'hr' %}
+            <div class="flex justify-end">
+              <div class="max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5
+                          bg-bg-300 dark:bg-d-bg-400
+                          text-txt-100 dark:text-d-txt-100
+                          text-[0.95rem] leading-relaxed whitespace-pre-wrap break-words">{{ message.content }}</div>
+            </div>
+          {% else %}
+            <div class="flex gap-4">
+              <svg viewBox="0 0 24 24" class="w-6 h-6 mt-0.5 shrink-0 text-accent" fill="currentColor">
+                <path d="M12 2.6l1.86 5.02L19 6.02l-2.9 4.2L21 12l-4.9 1.78L19 17.98l-5.14-1.6L12 21.4l-1.86-5.02L5 17.98l2.9-4.2L3 12l4.9-1.78L5 6.02l5.14 1.6z"/>
+              </svg>
+              <div class="prose-c min-w-0 flex-1 text-[0.95rem]
+                          text-txt-200 dark:text-d-txt-200"
+                   data-md>{{ message.content }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- composer -->
+    <div class="shrink-0 bg-bg-100 dark:bg-d-bg-200">
+      <div class="mx-auto w-full max-w-3xl px-6 pb-5">
+        <form id="chatForm" class="relative">
+          <div class="rounded-2xl border border-brd-300 dark:border-d-brd-300
+                      bg-bg-000 dark:bg-d-bg-300
+                      shadow-[0_2px_8px_rgba(0,0,0,0.04)]
+                      focus-within:border-accent/60 transition-colors">
+            <textarea id="input" rows="1" autofocus
+              placeholder="Reply to Pratap…"
+              class="block w-full resize-none bg-transparent px-4 pt-3.5 pb-2
+                     text-[0.95rem] leading-6 placeholder-txt-400 dark:placeholder-d-txt-400
+                     text-txt-100 dark:text-d-txt-100 focus:outline-none"></textarea>
+            <div class="flex items-center justify-between px-3 pb-3 pt-1">
+              <span id="hint" class="text-[0.7rem] text-txt-400 dark:text-d-txt-400">
+                Enter to send · Shift+Enter for newline
+              </span>
+              <button type="submit" id="send" disabled
+                class="grid place-items-center w-8 h-8 rounded-lg
+                       bg-accent text-white hover:bg-accent-hov
+                       disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </form>
+        <p class="mt-2 text-center text-[0.7rem] text-txt-400 dark:text-d-txt-400">
+          Answers come only from Pratap's resume and profile data.
+        </p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const CONV_ID = "{{ conversation.id }}";
+const SEND_URL = "/conversation/" + CONV_ID + "/send/";
+
+const scroller = document.getElementById('scroller');
+const messages = document.getElementById('messages');
+const form     = document.getElementById('chatForm');
+const input    = document.getElementById('input');
+const sendBtn  = document.getElementById('send');
+
+const ASTERISK =
+  '<svg viewBox="0 0 24 24" class="w-6 h-6 mt-0.5 shrink-0 text-accent" fill="currentColor">' +
+  '<path d="M12 2.6l1.86 5.02L19 6.02l-2.9 4.2L21 12l-4.9 1.78L19 17.98l-5.14-1.6L12 21.4l-1.86-5.02L5 17.98l2.9-4.2L3 12l4.9-1.78L5 6.02l5.14 1.6z"/></svg>';
+
+/* ---------- safe markdown ---------- */
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+  ));
+}
+function renderMd(raw) {
+  const lines = esc(raw).split('\n');
+  let html = '', list = null;
+
+  const inline = t => t
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  const close = () => { if (list) { html += `</${list}>`; list = null; } };
+
+  for (let ln of lines) {
+    const t = ln.trim();
+    if (!t) { close(); continue; }
+
+    const ul = t.match(/^[-*•]\s+(.*)$/);
+    const ol = t.match(/^(\d+)[.)]\s+(.*)$/);
+
+    if (ul) {
+      if (list !== 'ul') { close(); html += '<ul>'; list = 'ul'; }
+      html += `<li>${inline(ul[1])}</li>`;
+    } else if (ol) {
+      if (list !== 'ol') { close(); html += '<ol>'; list = 'ol'; }
+      html += `<li>${inline(ol[2])}</li>`;
+    } else {
+      close();
+      html += `<p>${inline(t)}</p>`;
+    }
+  }
+  close();
+  return html;
+}
+
+// render server-side assistant messages through the same pipeline
+document.querySelectorAll('[data-md]').forEach(el => {
+  el.innerHTML = renderMd(el.textContent.trim());
+});
+
+/* ---------- ui helpers ---------- */
+function atBottom() {
+  return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
+}
+function scrollDown(force) {
+  if (force || atBottom()) scroller.scrollTop = scroller.scrollHeight;
+}
+function addUser(text) {
+  const w = document.createElement('div');
+  w.className = 'flex justify-end msg-in';
+  const b = document.createElement('div');
+  b.className = 'max-w-[80%] rounded-2xl rounded-br-md px-4 py-2.5 ' +
+                'bg-bg-300 dark:bg-d-bg-400 text-txt-100 dark:text-d-txt-100 ' +
+                'text-[0.95rem] leading-relaxed whitespace-pre-wrap break-words';
+  b.textContent = text;               // textContent => no injection
+  w.appendChild(b);
+  messages.appendChild(w);
+  scrollDown(true);
+}
+function addAssistant(text) {
+  const w = document.createElement('div');
+  w.className = 'flex gap-4 msg-in';
+  w.innerHTML = ASTERISK +
+    '<div class="prose-c min-w-0 flex-1 text-[0.95rem] text-txt-200 dark:text-d-txt-200"></div>';
+  w.lastElementChild.innerHTML = renderMd(text);
+  messages.appendChild(w);
+  scrollDown();
+}
+function addTyping() {
+  const w = document.createElement('div');
+  w.id = 'typing';
+  w.className = 'flex gap-4 msg-in';
+  w.innerHTML = ASTERISK +
+    '<div class="flex items-center gap-1.5 h-6">' +
+      '<span class="dot w-1.5 h-1.5 rounded-full bg-txt-400 dark:bg-d-txt-400"></span>' +
+      '<span class="dot w-1.5 h-1.5 rounded-full bg-txt-400 dark:bg-d-txt-400"></span>' +
+      '<span class="dot w-1.5 h-1.5 rounded-full bg-txt-400 dark:bg-d-txt-400"></span>' +
+    '</div>';
+  messages.appendChild(w);
+  scrollDown(true);
+}
+function clearTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+function addError(msg) {
+  const w = document.createElement('div');
+  w.className = 'flex gap-4 msg-in';
+  w.innerHTML = ASTERISK +
+    '<div class="flex-1 text-[0.9rem] rounded-lg px-3 py-2 ' +
+    'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 ' +
+    'border border-red-200 dark:border-red-900"></div>';
+  w.lastElementChild.textContent = msg;
+  messages.appendChild(w);
+  scrollDown(true);
+}
+
+function autosize() {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 240) + 'px';
+  sendBtn.disabled = input.value.trim() === '';
+}
+input.addEventListener('input', autosize);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
+});
+
+/* ---------- send ---------- */
+let busy = false;
+
+async function send(text) {
+  if (busy || !text) return;
+  busy = true;
+  sendBtn.disabled = true;
+  input.value = '';
+  autosize();
+
+  addUser(text);
+  addTyping();
+
+  try {
+    const res = await fetch(SEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await res.json().catch(() => ({}));
+    clearTyping();
+
+    if (res.ok && data.success) {
+      addAssistant(data.response);
+    } else {
+      addError(data.error || ('Request failed (' + res.status + ')'));
+    }
+  } catch (err) {
+    clearTyping();
+    addError('Network error: ' + err.message);
+  } finally {
+    busy = false;
+    autosize();
+    input.focus();
+  }
+}
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  send(input.value.trim());
+});
+
+/* ---------- first message carried from the home screen ---------- */
+(function () {
+  const q = new URLSearchParams(location.search).get('q');
+  if (q) {
+    history.replaceState({}, '', location.pathname);   // don't resend on refresh
+    send(q);
+  }
+})();
+
+scrollDown(true);
+input.focus();
+</script>
+{% endblock %}
