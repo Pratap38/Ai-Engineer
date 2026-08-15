@@ -9,10 +9,10 @@ load_dotenv()
 # Retrieve API key
 my_api_key = os.getenv("GROQ_API_KEY")
 knowledgeBase={
-    "name":"pratap narayan choubey",
-    "about":"pratap narayan choubey is an student study in itm university is in btech 2 year an will passout in next 2 sem ",
-    "aim":"his aim is to become an dancer and also singer",
-    "age":12,
+    "name":"$$$$$$$$$$$$$$",
+    "about":"############### ",
+    "aim":"%%%%%%%%%%%%%%%%%%%%%%%^",
+    "age":$$,
     "intership":"he is intern an spacex as an astorloger"
 }
 
@@ -70,7 +70,7 @@ def askllm(prompt):
     answer=response.choices[0].message.content
     return answer
 
-prompt="tell me about  pratap narayan choubey and his age"
+prompt="^^^^^^^^^^^^^^^^^^^^^^^^^^"
 print(askllm(prompt))
 
 
