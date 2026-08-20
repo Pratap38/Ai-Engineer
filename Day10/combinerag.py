@@ -9,7 +9,7 @@ from sentence_transformers import SentenceTransformer
 load_dotenv()
 
 # Retrieve API key
-my_api_key = os.getenv("GROQ_API_KEY")
+my_api_key =  os.getenv("GROQ_API_KEY")
 
 if not my_api_key:
     raise ValueError("API key missing")
@@ -392,32 +392,36 @@ def retrive(qembed):
    return score[0]
 
 
-def askllm(queryy):
-   context=retrive(queryy)   
-   systemprompt=f"""
-answer in one line answer should be based on the context donot halucinate or anything else {context}
-   """
-   systemMessgae={
-      "role":"system",
-      "content":systemprompt
-   }
-   message={
-    "role":"user",
-    "content":queryy
-   }
-   messages=[systemMessgae,message]
-   response=client.chat.completions.create(
-               model=model_name,
-               messages=message
-           )
-   answer=response.choices[0].message.content
-   print(answer)
-
-
-
+def askllm(queryy, context):
+    systemprompt = f"""
+    answer in one line answer should be based on the context donot halucinate or anything else {context}
+    """
+    systemMessgae = {
+        "role": "system",
+        "content": systemprompt
+    }
+    message = {
+        "role": "user",
+        "content": queryy
+    }
+    messages = [systemMessgae, message]
+    
+  
+    response = client.chat.completions.create(
+        model="openai/gpt-oss-20b", 
+        messages=messages 
+    )
+    
+    answer = response.choices[0].message.content
+    print(answer)
+    return answer
 
 
 
 prompt="what is the name of the company and i want to know that timing of the company is in afternoon or morning or evening and company location"
 queryEmbed=model.encode(prompt)
 score,context=retrive(queryEmbed)
+answer=askllm(prompt,context)
+print(answer)
+print(score)
+print(sys.getsizeof(KnowledgeBaseDocument))
