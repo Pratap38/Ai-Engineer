@@ -5,20 +5,30 @@ from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance ,VectorParams,PointStruct
+from qdrant_client.models import Distance, VectorParams, PointStruct
 
 
 load_dotenv()
 
 
-client=QdrantClient(url=Quadrant_Cluster,api_key=QuadrantAPI)
+# Load API credentials from environment variables
+Quadrant_Cluster = os.getenv("QDRANT_URL")
+QuadrantAPI = os.getenv("QDRANT_API_KEY")
+GroqApi = os.getenv("GROQ_API_KEY")
+
+
+client = QdrantClient(
+    url=Quadrant_Cluster,
+    api_key=QuadrantAPI
+)
+
 print("Quadrant connected !")
 
 
 # creating quadrant collection/Table
 
-CollectionName="knowledge"
-EmbeddingSize=384
+CollectionName = "knowledge"
+EmbeddingSize = 384
 
 
 if client.collection_exists(CollectionName):
@@ -38,52 +48,55 @@ client.create_collection(
 print(f"Table is been created:{CollectionName}")
 print(f"Arraysize done{EmbeddingSize}")
 
-with open("/content/knowledge.txt","r",encoding="utf-8")as f:
-    lines=[
+with open("/content/knowledge.txt", "r", encoding="utf-8") as f:
+    lines = [
         line.strip()
         for line in f
         if line.strip()
     ]
-CHUNK=5
-OVERLAP=2
-documents=[
-    " ".join(lines[i:i+CHUNK])
-    for i in range(0, len(lines), CHUNK-OVERLAP)
+
+CHUNK = 5
+OVERLAP = 2
+
+documents = [
+    " ".join(lines[i:i + CHUNK])
+    for i in range(0, len(lines), CHUNK - OVERLAP)
 ]
 
 print(f"loaded {len(lines)} lines -> {len(documents)} chunks")
 
 
-# now loading embedding profgram
-
+# now loading embedding program
 
 model = SentenceTransformer('all-MiniLM-L6-v2')
 model_name = "openai/gpt-oss-20b"
 
-embedding=model.encode(documents)
+embedding = model.encode(documents)
 
-points=[]        ## as we rember an point is that which store arrays id ,array and payload
+points = []  # as we remember a point is that which store array id, array and payload
 
-for i,embed in enumerate(embedding):
-    point=PointStruct(
-        id=i+1,
+for i, embed in enumerate(embedding):
+    point = PointStruct(
+        id=i + 1,
         vector=embed.tolist(),
         payload={
-            "text":documents[i]
+            "text": documents[i]
         }
     )
     points.append(point)
 
 # upload in quadrant
 
-client.upsert(       ##upsert means upload+insert
+client.upsert(
     collection_name=CollectionName,
     points=points
 )
+
 print("file success upload")
 
-def search(query,k=3):
-    queryArray=model.encode(query).tolist()
+
+def search(query, k=3):
+    queryArray = model.encode(query).tolist()
 
     response = client.query_points(
         collection_name=CollectionName,
@@ -91,12 +104,15 @@ def search(query,k=3):
         limit=k,
         with_payload=True,
     )
+
     return response.points
 
 
-groqClient=Groq(
+# Groq client using API key from .env
+groqClient = Groq(
     api_key=GroqApi
 )
+
 
 goldenDataset = [
     {
@@ -322,14 +338,15 @@ goldenDataset = [
         "answer": "Interns may be evaluated on technical ability, quality of work, problem-solving, learning ability, communication, teamwork, attendance, punctuality, meeting deadlines, professional behavior, and initiative."
     }
 ]
+
+
 # expected information we have added in order to have relevance
 
-def precisioncal(question,retriveDoc):
-    relevatChunk=0
+def precisioncal(question, retriveDoc):
+    relevatChunk = 0
 
-    for i,doc in enumerate(retriveDoc):
-        CHUNK=doc.payload["text"]
-
+    for i, doc in enumerate(retriveDoc):
+        CHUNK = doc.payload["text"]
 
         prompt = f"""
         You are evaluating the retrieval quality
@@ -357,15 +374,18 @@ def precisioncal(question,retriveDoc):
         Return false if it is unrelated.
         """
 
-        result=llmJudge(prompt)
+        result = llmJudge(prompt)
 
         if result["relevant"]:
-            relevatChunk+=1
-    if len(retriveDoc)==0:
-        return 0.0
-    return(relevatChunk/len(retriveDoc))
+            relevatChunk += 1
 
-def Recall(question,context,groundTruth):
+    if len(retriveDoc) == 0:
+        return 0.0
+
+    return relevatChunk / len(retriveDoc)
+
+
+def Recall(question, context, groundTruth):
     prompt = f"""
     You are evaluating the retrieval quality
     of a RAG system.
@@ -400,13 +420,8 @@ def Recall(question,context,groundTruth):
     0.5 = Some important information is present.
 
     0.0 = The required information is absent.
-"""
+    """
 
-
-    result = llJjudge(
-        prompt
-    )
-
+    result = llJjudge(prompt)
 
     return result
-    
