@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pratap-mcp": {
+      "command": "command require to execute",
+      "args": ["you file path"]
+    }
+  }
+}
