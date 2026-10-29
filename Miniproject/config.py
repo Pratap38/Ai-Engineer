@@ -19,7 +19,7 @@ MaxRetries=3
 TimeGap=2
 
 EdgeLine=3
-RepeatRatio=0.4
+RepeatRatio=0.6
 MinCharPerPage=100
-
+WINDOW_PAGES = 10              # fallback: fixed page windows when no chapters are found
 OuputDir="Output"
