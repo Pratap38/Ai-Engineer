@@ -4,7 +4,7 @@ from pypdf import PdfReader
 import config
 
 class ScannedPdfError(Exception):
-    def LowerCaseCoversion(line:str)->str:         
+    def LowerCaseCoversion(line:str)->str:
         return re.sub(r"\d+","#",line.strip().lower())
     @staticmethod
     def Outline(reader,items,level=1,out=None):
@@ -26,7 +26,7 @@ class ScannedPdfError(Exception):
         return out
 
 
-# split outline and pages and return 
+# split outline and pages and return
     def ExtractRawPage(pdfPath:str):
         pdfread=PdfReader(pdfPath)
 
@@ -56,7 +56,7 @@ class ScannedPdfError(Exception):
         if AvgChar<config.MinCharPerPage:
             raise ScannedPdfError(
                 f"Only -{AvgChar:.Of} character per page found "
-                
+
             )
 # apan header and footer determine karenge
 
@@ -70,8 +70,55 @@ class ScannedPdfError(Exception):
         n=config.EdgeLine
         return set(NonEmpty[:n]+NonEmpty[-n:])
 
-    
-    
+
+    def RepeatedLine(pages)->set:
+        count=Counter()
+        for i in pages:
+            lines=i["text"].splitlines()
+            keys=set()
+            for i in ScannedPdfError.EdgeIndices(lines):
+                keys.add(ScannedPdfError.LowerCaseCoversion(lines[i]))
+            count.update(keys)
+            threshold = max(3, int(len(pages) * config.REPEAT_RATIO))
+
+            result = set()
+            for key, countt in count.items():
+                if countt >= threshold and key:
+                    result.add(key)
+
+            return result
+    def CleanPage(text:str,repeated:set)->str:
+        lines=text.splitlines()
+        edges=ScannedPdfError.EdgeIndices(lines)
+        kept=[]
+        for i,line in enumerate(lines):
+            if not (i in edges and ScannedPdfError.LowerCaseCoversion(line)in repeated):
+                kept.append(line)
+        text = "\n".join(kept)
+        text = re.sub(r"-\n(\w)", r"\1", text)    # join words split by hyphen at line end
+        text = re.sub(r"\n{3,}", "\n\n", text)    # collapse many blank lines
+        return text.strip()
 
 
-    
+    def pdfentry(pdfPath:str)->dict:
+        pages,outline=ScannedPdfError.ExtractRawPage(pdfPath)
+        if not pages:
+            raise ValueError("pdf has no pages")
+        ScannedPdfError.EndOFCharpage(pages)
+
+        repeatcheck=ScannedPdfError.RepeatedLine(pages)
+        for  i in pages:
+            i["text"]=ScannedPdfError.CleanPage(i["text"],repeatcheck)
+            i["word"]=len(i["text"].split())
+        return{
+            "pages":pages,
+            "outline":outline,
+            "TotalPages":len(pages),
+           "TotalWordpresent": sum(i["word"] for i in pages),
+           "removedLines":sorted(repeatcheck)
+        }
+
+
+
+
+
